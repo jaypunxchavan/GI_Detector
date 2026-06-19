@@ -32,7 +32,7 @@ def to_mgdL(reading_mA):
     return (reading_mA - intercept) / slope
 
 
-TIME_POINTS = [0, 15, 30, 45, 60]  # minutes
+TIME_POINTS = [0, 15, 30, 60]  # minutes
 
 
 # TRIAL BLOCK — edit this section before each run
