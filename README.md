@@ -1,24 +1,23 @@
 # GI Detector
-A sub-$100 electrochemical sensor pipeline for in vitro glycemic index estimation.
+A sub-$300 electrochemical sensor pipeline for in vitro glycemic index estimation.
 
 ## What this is
-This project replicates the Magaletta in vitro GI pipeline -- enzymatic starch digestion, glucose measurement, ML-based prediction -- using commodity hardware instead of HPLC. The goal is to quantify how much accuracy is lost when you replace a $10,000 lab instrument with an ~$200 Arduino-based sensor.
+Tests whether a commodity glucometer strip, read by a custom Arduino circuit, can estimate glycemic index (GI) as accurately as lab-grade methods (HPLC, enzymatic assays) at a fraction of the cost. Food samples undergo simulated digestion, glucose release is tracked over time, and the resulting signal is correlated against each food's published GI value.
 
-## Hardware architecture
-Glucometer strip electrodes connect to a transimpedance amplifier (MCP6002 op-amp, channel A) that converts the microamp-level glucose oxidase reaction current into a 0–5V signal read by the Arduino's built-in ADC (analogRead, no external sensor IC required for the measurement itself). A 1MΩ feedback resistor sets the default gain, with 10MΩ, 200kΩ, and 100kΩ as troubleshooting fallbacks. A trim potentiometer provides an adjustable 0–5V bias on the second electrode, since the strip's electrochemistry needs a bias point away from 0V to produce a glucose-dependent signal. Full circuit wiring, pinout, and a troubleshooting tree (gain, bias, contact, and polarity issues) are documented in `src/hardware/`.
+## Hardware
+Glucometer strip electrodes connect to a transimpedance amplifier (MCP6002 op-amp) that converts the glucose oxidase reaction current into a 0–5V signal read by the Arduino's ADC. 1MΩ feedback resistor (10MΩ/200kΩ/100kΩ fallbacks), trim potentiometer for bias, ICL7660 negative-bias circuit included. Full wiring and troubleshooting docs in `src/hardware/`.
 
-An earlier version of this project used an INA219 current sensor wired directly across the strip electrodes. That architecture doesn't work: the INA219 is a bus-current monitor intended for amp-to-milliamp-scale measurements, not the 1–5 microamp signal this strip produces, and it sits below the sensor's resolution at any usable gain setting. The INA219 module is no longer part of the measurement circuit.
+Uses TRUENESS glucometer strips (glucose oxidase, 40–600 mg/dL range) with a TRUENESS meter as ground truth during calibration.
 
 ## Methodology
 
-**Phase 1: Hardware calibration (in progress)**
-Arduino Uno + MCP6002 transimpedance amplifier reads the glucose oxidase reaction current from Contour Next glucometer strips as a 0–5V signal (raw ADC counts, 0–1023). Calibrated against dextrose standards at 50–400 mg/dL, prepared in the same 0.15M sodium acetate buffer used for digestion, so the calibration matrix matches the measurement matrix.
+**Phase 0: Pre-Procedure validation** — Circuit tested against known dextrose standards (50–400 mg/dL) in matched buffer.
 
-**Phase 2: Digestion protocol**
-Food sample dissolved in 0.15M sodium acetate buffer (pH 5.8–6.2), incubated with alpha-amylase at 37°C in a sous vide water bath. Glucose readings at 0, 15, 30, 45, 60 min. Area under the glucose release curve (AUC) computed per food, normalized against a simultaneous white bread reference (white bread = 100).
+**Phase 1: Digestion protocol** — Food standardized to ~0.5g available carbohydrate, ground and sieved, dissolved in ~20mL 0.15M sodium acetate buffer (pH 4.5–5.0). Alpha-amylase + glucoamylase added at T=0, incubated at 37°C. Glucose read at T=0/15/30/60 min. AUC normalized against a white bread reference (white bread = 100).
 
-**Phase 3: Full data collection**
-20 foods across low/medium/high GI categories, plus 3 validation foods (white bread, rolled oats, lentils) used to confirm the pipeline before scaling up. Two trials per food minimum.
+**Phase 2: Data collection** — 5 foods spanning the GI range (white bread 100, white rice ~73, oats ~50, lentils ~29, chickpeas ~28), 3 trials each.
 
-**Phase 4: ML comparison**
-Three models compared: macronutrients only (baseline, established at 60.8% LOO accuracy on a 79-food computational dataset), AUC only (sensor signal alone), macronutrients + AUC combined. The delta between baseline and combined quantifies the sensor's contribution.
+**Phase 3: Analysis** — Spearman correlation between sensor AUC and published GI values, with confidence interval. Macronutrient-only baseline (60.8% LOO accuracy, 79-food dataset) retained as background context.
+
+## Status
+Nothing physically built or purchased yet. See `docs/` for full materials list and assembly protocol.
