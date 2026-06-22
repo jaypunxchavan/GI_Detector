@@ -27,7 +27,6 @@ for d in [FIG_DIR, MODEL_DIR, VAL_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 
-print("Loading dataset...")
 df = pd.read_csv(DATA_PATH)
 print(f"  {len(df)} foods loaded")
 print(f"  GI distribution: {dict(df['gi_category'].value_counts())}")
@@ -72,7 +71,7 @@ for name, model in models.items():
     if acc_mean > best_acc:
         best_acc, best_name = acc_mean, name
 
-print(f"\nBest model: {best_name} ({best_acc:.3f})")
+print(f"Best model: {best_name} ({best_acc:.3f})")
 
 best_model = models[best_name]
 y_pred = cross_val_predict(best_model, X, y, cv=loo)
@@ -115,10 +114,8 @@ plt.tight_layout()
 fi_path = FIG_DIR / "baseline_feature_importance.png"
 plt.savefig(fi_path, dpi=150)
 plt.close()
-print(f"Saved: {fi_path}")
 
 
-print("\n")
 print("Feature Importance (Random Forest, fit on all data):")
 for i in feat_order:
     bar = "█" * int(importances[i] * 40)
