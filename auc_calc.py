@@ -14,7 +14,6 @@ FIG_DIR    = BASE_DIR / "results" / "figures"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-print("Loading calibration coefficients...")
 with open(CAL_PATH) as f:
     cal = json.load(f)
 
@@ -24,15 +23,15 @@ intercept = cal["intercept_mA"]
 print(f"  Slope: {slope}  Intercept: {intercept}  R²: {cal['r_squared']}")
 
 if not cal["r_squared_passes"]:
-    print("⚠  WARNING: Calibration R² is below 0.95. Results may be unreliable.")
+    print("  WARNING: Calibration R² is below 0.95. Results may be unreliable.")
     print("   Re-run calibration.py before collecting data.")
 
 def to_mgdL(reading_mA):
-    """Convert raw INA219 mA reading to glucose concentration in mg/dL."""
+    #Convert raw INA219 mA reading to glucose concentration in mg/dL.
     return (reading_mA - intercept) / slope
 
 
-TIME_POINTS = [0, 15, 30, 60]  # minutes
+TIME_POINTS = [0, 15, 30, 60] 
 
 
 # TRIAL BLOCK — edit this section before each run
@@ -66,7 +65,7 @@ TRIAL = {
 food_mgdL  = [to_mgdL(r) for r in TRIAL["food_readings_mA"]]
 bread_mgdL = [to_mgdL(r) for r in TRIAL["bread_readings_mA"]]
 
-print(f"\n── Glucose concentrations (mg/dL) ───────────────────")
+print(f" Glucose concentrations (mg/dL)")
 print(f"  Time (min):  {TIME_POINTS}")
 print(f"  {TRIAL['food_name']:20s}: {[round(v,1) for v in food_mgdL]}")
 print(f"  White bread:          {[round(v,1) for v in bread_mgdL]}")
@@ -86,13 +85,13 @@ def trapezoidal_auc(concentrations, times):
 auc_food  = trapezoidal_auc(food_mgdL, TIME_POINTS)
 auc_bread = trapezoidal_auc(bread_mgdL, TIME_POINTS)
 
-print(f"\n── AUC Results ──────────────────────────────────────")
+print("AUC Results")
 print(f"  {TRIAL['food_name']:20s} raw AUC: {auc_food:.2f} mg/dL·min")
 print(f"  White bread           raw AUC: {auc_bread:.2f} mg/dL·min")
 
 #normalization
 if auc_bread <= 0:
-    print("\n ERROR: White bread AUC is zero or negative.")
+    print(" ERROR: White bread AUC is zero or negative.")
     print("   Check that bread_readings_mA contains real values.")
     auc_normalized = None
 else:
