@@ -39,18 +39,18 @@ intercept = model.intercept_
 y_pred    = model.predict(X)
 r2        = r2_score(y, y_pred)
 
-print(f"\nCalibration results: ")
+print("Calibration results: ")
 print(f"  Slope:      {slope:.6f} mA per mg/dL")
 print(f"  Intercept:  {intercept:.6f} mA")
 print(f"  R²:         {r2:.4f}")
 
 if r2 >= 0.95:
-    print(f" R² passes threshold (≥0.95). Calibration is valid.")
+    print(f" R^2 passes threshold (>=0.95).")
 else:
-    print(f" X R² BELOW 0.95. Do not proceed with data collection.")
+    print(f" !! R^2 BELOW 0.95. Do not proceed with data collection.")
     print(f"Check strip contact consistency and wiring before retrying.")
 
-print(f"\nConversion formula:")
+print("Conversion formula:")
 print(f"  glucose_mgdL = (INA219_reading_mA - {intercept:.6f}) / {slope:.6f}")
 
 # plotting
