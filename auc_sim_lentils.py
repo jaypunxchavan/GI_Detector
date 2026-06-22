@@ -35,7 +35,7 @@ TRIAL = {
     "enzyme_quantity_g":       0.3,
     "water_bath_temp_start_C": 37.0,
     "water_bath_temp_end_C":   37.0,
-    "notes":                   "SIMULATED DATA — pipeline validation only. Not real sensor readings.",
+    "notes":                   "SIMULATED DATA: pipeline validation only. Not real sensor readings.",
     "food_readings_mA":        [0.12, 0.19, 0.26, 0.31, 0.34],
     "bread_readings_mA":       [0.15, 0.52, 0.74, 0.85, 0.89],
 }
