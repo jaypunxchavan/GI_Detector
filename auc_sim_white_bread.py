@@ -20,7 +20,7 @@ print(f"  Slope: {slope}  Intercept: {intercept}  R²: {cal['r_squared']}")
 def to_mgdL(reading_mA):
     return (reading_mA - intercept) / slope
 
-TIME_POINTS = [0, 15, 30, 45, 60]
+TIME_POINTS = [0, 15, 30, 60, 120]
 
 TRIAL = {
     "food_name":               "white bread",
