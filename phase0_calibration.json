@@ -7,57 +7,57 @@
     "standards": [
         {
             "concentration_mgdL": 50,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 100,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 150,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 200,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 250,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 300,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 400,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 500,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         },
         {
             "concentration_mgdL": 600,
-            "reading_1_mA": null,
-            "reading_2_mA": null,
-            "reading_3_mA": null
+            "reading_1_adc": null,
+            "reading_2_adc": null,
+            "reading_3_adc": null
         }
     ],
 
@@ -66,6 +66,6 @@
         "commercial_meter_brand": "",
         "concentration_mgdL": null,
         "commercial_meter_reading_mgdL": null,
-        "circuit_reading_mA": null
+        "circuit_reading_adc": null
     }
 }
