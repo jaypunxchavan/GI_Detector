@@ -17,8 +17,8 @@
         "water_bath_temp_start_C": null,
         "water_bath_temp_end_C": null,
         "notes": "",
-        "food_readings_mA":  [null, null, null, null, null],
-        "bread_readings_mA": [null, null, null, null, null]
+        "food_readings_adc":  [null, null, null, null, null],
+        "bread_readings_adc": [null, null, null, null, null]
     },
     "trial_2": {
         "date": "",
@@ -26,8 +26,8 @@
         "water_bath_temp_start_C": null,
         "water_bath_temp_end_C": null,
         "notes": "",
-        "food_readings_mA":  [null, null, null, null, null],
-        "bread_readings_mA": [null, null, null, null, null]
+        "food_readings_adc":  [null, null, null, null, null],
+        "bread_readings_adc": [null, null, null, null, null]
     },
     "trial_3": {
         "date": "",
@@ -35,8 +35,8 @@
         "water_bath_temp_start_C": null,
         "water_bath_temp_end_C": null,
         "notes": "",
-        "food_readings_mA":  [null, null, null, null, null],
-        "bread_readings_mA": [null, null, null, null, null]
+        "food_readings_adc":  [null, null, null, null, null],
+        "bread_readings_adc": [null, null, null, null, null]
     },
 
     "_readings_note": "Readings order matches experiment_constants.json digestion_time_points_min: [0, 15, 30, 60, 120]."
