@@ -35,8 +35,8 @@ TRIAL = {
     "water_bath_temp_start_C": 37.0,
     "water_bath_temp_end_C":   37.0,
     "notes":                   "SIMULATED DATA — pipeline validation only. Not real sensor readings.",
-    "food_readings_mA":        [0.15, 0.52, 0.74, 0.85, 0.89],
-    "bread_readings_mA":       [0.15, 0.52, 0.74, 0.85, 0.89],
+    "food_readings_mA":  [0.15, 0.52, 0.74, 0.89, 0.91],
+    "bread_readings_mA": [0.15, 0.52, 0.74, 0.89, 0.91],
 }
 
 food_mgdL  = [to_mgdL(r) for r in TRIAL["food_readings_mA"]]
