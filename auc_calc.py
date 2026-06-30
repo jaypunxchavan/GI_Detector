@@ -1,184 +1,226 @@
+"""
+Usage:
+    python auc_calc.py trial_data/lentils.json
+    python auc_calc.py trial_data/white_bread.json
+
+Reads a food JSON file (all 3 trials) and experiment_constants.json,
+computes normalized AUC for each trial, plots digestion curves,
+and appends results to the master CSV.
+
+The primary result of this project is Spearman correlation between
+mean normalized AUC (across 3 trials) and published GI value.
+All five food files must be processed before running the final analysis.
+"""
+
 import json
 import csv
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from datetime import date
 
 
-BASE_DIR   = Path(__file__).resolve().parent.parent.parent
-CAL_PATH   = BASE_DIR / "results" / "validation" / "calibration_curve.json"
-DATA_PATH  = BASE_DIR / "data" / "experimental" / "digestion_results.csv"
-FIG_DIR    = BASE_DIR / "results" / "figures"
-
+BASE_DIR       = Path(__file__).resolve().parent
+CONSTANTS_PATH = BASE_DIR / "trial_data" / "experiment_constants.json"
+CAL_PATH       = BASE_DIR / "results" / "validation" / "calibration_curve.json"
+DATA_PATH      = BASE_DIR / "results" / "digestion_results.csv"
+FIG_DIR        = BASE_DIR / "results" / "figures"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 
+if len(sys.argv) < 2:
+    print("Usage: python auc_calc.py trial_data/<food>.json")
+    sys.exit(1)
+
+food_path = Path(sys.argv[1])
+if not food_path.exists():
+    print(f"ERROR: File not found: {food_path}")
+    sys.exit(1)
+
+with open(food_path) as f:
+    food = json.load(f)
+
+with open(CONSTANTS_PATH) as f:
+    constants = json.load(f)
 
 with open(CAL_PATH) as f:
     cal = json.load(f)
 
 slope     = cal["slope_mA_per_mgdL"]
 intercept = cal["intercept_mA"]
-
-print(f"  Slope: {slope}  Intercept: {intercept}  R²: {cal['r_squared']}")
-
+print(f"Calibration: slope={slope}, intercept={intercept}, R²={cal['r_squared']}")
 if not cal["r_squared_passes"]:
-    print("  WARNING: Calibration R² is below 0.95. Results may be unreliable.")
-    print("   Re-run calibration.py before collecting data.")
+    print("WARNING: Calibration R² below 0.95. Re-run calibration.py before proceeding.")
+
+TIME_POINTS  = constants["digestion_time_points_min"]       # [0, 15, 30, 60, 120]
+STRIP_MIN    = constants["strip_detection_range_mgdL"][0]   # 40
+STRIP_MAX    = constants["strip_detection_range_mgdL"][1]   # 600
+FOOD_NAME    = food["food_name"]
+PUBLISHED_GI = food["published_gi_value"]
+
 
 def to_mgdL(reading_mA):
-    #Convert raw INA219 mA reading to glucose concentration in mg/dL.
+    """Convert raw sensor current reading (mA) to glucose concentration (mg/dL).
+    Reliable range: 40-600 mg/dL per strip specification.
+    """
     return (reading_mA - intercept) / slope
 
 
-TIME_POINTS = [0, 15, 30, 60] 
-
-
-# TRIAL BLOCK — edit this section before each run
-# Enter the raw INA219 current readings (in mA) from the serial monitor
-# for each time point, for both the test food and white bread reference.
-
-
-TRIAL = {
-    # metadata, edit as needed
-    "food_name":          "white bread",          # e.g. "lentils", "banana"
-    "brand":              "Pepperidge Farm",       # exact product name
-    "trial_number":       1,                       # 1, 2, or 3
-    "date":               str(date.today()),       # auto-filled
-    "buffer_pH_reading":  "6.0",                   # from pH strip
-    "vinegar_volume_mL":  "~12",                   # approx mL added
-    "enzyme_product":     "TAPCRAFT Alpha Amylase",
-    "enzyme_lot":         "unknown",               # from packaging
-    "enzyme_quantity_g":  0.3,
-    "water_bath_temp_start_C": 37.0,
-    "water_bath_temp_end_C":   37.0,
-    "notes":              "",                      # any deviations
-
-    # raw readings in mA. Replace these with your actual serial monitor output.
-    # Order: [T=0, T=15, T=30, T=45, T=60]
-
-    "food_readings_mA":   [0.00, 0.00, 0.00, 0.00, 0.00],   # REPLACE
-    "bread_readings_mA":  [0.00, 0.00, 0.00, 0.00, 0.00],   # REPLACE
-}
-
-
-food_mgdL  = [to_mgdL(r) for r in TRIAL["food_readings_mA"]]
-bread_mgdL = [to_mgdL(r) for r in TRIAL["bread_readings_mA"]]
-
-print(f" Glucose concentrations (mg/dL)")
-print(f"  Time (min):  {TIME_POINTS}")
-print(f"  {TRIAL['food_name']:20s}: {[round(v,1) for v in food_mgdL]}")
-print(f"  White bread:          {[round(v,1) for v in bread_mgdL]}")
-
-
 def trapezoidal_auc(concentrations, times):
-    """
-    Compute area under curve using trapezoidal rule.
-    AUC = sum of ((g[i] + g[i+1]) / 2) * (t[i+1] - t[i])
-    Units: mg/dL * minutes
+    """Area under glucose-release curve via trapezoidal rule.
+    Units: mg/dL * minutes.
     """
     auc = 0.0
     for i in range(len(times) - 1):
         auc += ((concentrations[i] + concentrations[i+1]) / 2) * (times[i+1] - times[i])
     return auc
 
-auc_food  = trapezoidal_auc(food_mgdL, TIME_POINTS)
-auc_bread = trapezoidal_auc(bread_mgdL, TIME_POINTS)
 
-print("AUC Results")
-print(f"  {TRIAL['food_name']:20s} raw AUC: {auc_food:.2f} mg/dL·min")
-print(f"  White bread           raw AUC: {auc_bread:.2f} mg/dL·min")
+def check_range(values, trial_num, label):
+    for t, v in zip(TIME_POINTS, values):
+        if v < STRIP_MIN or v > STRIP_MAX:
+            print(f"  WARNING Trial {trial_num} {label}: T={t}min reading {v:.1f} mg/dL "
+                  f"outside reliable range ({STRIP_MIN}-{STRIP_MAX} mg/dL)")
 
-#normalization
-if auc_bread <= 0:
-    print(" ERROR: White bread AUC is zero or negative.")
-    print("   Check that bread_readings_mA contains real values.")
-    auc_normalized = None
-else:
+
+
+print(f"Food: {FOOD_NAME}| Published GI: {PUBLISHED_GI}")
+
+trial_results = []
+fig, ax = plt.subplots(figsize=(8, 5))
+colors_food  = ["#1A5276", "#2E86C1", "#85C1E9"]
+colors_bread = ["#C0392B", "#E74C3C", "#F1948A"]
+
+for i, trial_key in enumerate(["trial_1", "trial_2", "trial_3"], start=1):
+    trial = food[trial_key]
+
+    if None in trial["food_readings_mA"] or None in trial["bread_readings_mA"]:
+        print(f"\nTrial {i}: SKIPPED — readings not yet filled in.")
+        continue
+
+    food_mgdL  = [to_mgdL(r) for r in trial["food_readings_mA"]]
+    bread_mgdL = [to_mgdL(r) for r in trial["bread_readings_mA"]]
+
+    check_range(food_mgdL,  i, "food")
+    check_range(bread_mgdL, i, "bread")
+
+    auc_food  = trapezoidal_auc(food_mgdL,  TIME_POINTS)
+    auc_bread = trapezoidal_auc(bread_mgdL, TIME_POINTS)
+
+    if auc_bread <= 0:
+        print(f"\nTrial {i}: ERROR — white bread AUC is zero or negative. Check readings.")
+        continue
+
     auc_normalized = (auc_food / auc_bread) * 100
-    print(f"\n  Normalized AUC: {auc_normalized:.1f}")
-   
 
-    # Rough GI category prediction from normalized AUC
-    # These thresholds are calibrated against validation foods
-    # and will be refined after Phase 3 data collection
-    if auc_normalized <= 60:
-        predicted_category = "low GI (≤55)"
-    elif auc_normalized <= 85:
-        predicted_category = "medium GI (56–69)"
-    else:
-        predicted_category = "high GI (≥70)"
+    print(f"Trial {i}  ({trial['date']})")
+    print(f"  pH: {trial['buffer_pH']}  |  "
+          f"Temp: {trial['water_bath_temp_start_C']} -> {trial['water_bath_temp_end_C']} °C")
+    print(f"  Time points (min):   {TIME_POINTS}")
+    print(f"  {FOOD_NAME:20s}: {[round(v,1) for v in food_mgdL]} mg/dL")
+    print(f"  White bread: {[round(v,1) for v in bread_mgdL]} mg/dL")
+    print(f"  Food AUC: {auc_food:.2f} mg/dL·min")
+    print(f"  Bread AUC: {auc_bread:.2f} mg/dL·min")
+    print(f"  Normalized AUC: {auc_normalized:.1f}")
+    if trial["notes"]:
+        print(f"  Notes: {trial['notes']}")
 
-    print(f"  Predicted category: {predicted_category}")
-    print(f"  Note: category thresholds are preliminary until ML model is trained on full dataset.")
+    trial_results.append({
+        "trial":          i,
+        "date":           trial["date"],
+        "buffer_pH":      trial["buffer_pH"],
+        "temp_start_C":   trial["water_bath_temp_start_C"],
+        "temp_end_C":     trial["water_bath_temp_end_C"],
+        "food_mgdL":      food_mgdL,
+        "bread_mgdL":     bread_mgdL,
+        "auc_food":       auc_food,
+        "auc_bread":      auc_bread,
+        "auc_normalized": auc_normalized,
+        "notes":          trial["notes"],
+        "food_raw_mA":    trial["food_readings_mA"],
+        "bread_raw_mA":   trial["bread_readings_mA"],
+    })
 
-# plotting the digestion curves
-fig, ax = plt.subplots(figsize=(7, 5))
+    ax.plot(TIME_POINTS, food_mgdL, "o-", color=colors_food[i-1], linewidth=2,
+            markersize=6, label=f"{FOOD_NAME} trial {i} (norm. AUC={auc_normalized:.1f})")
+    ax.plot(TIME_POINTS, bread_mgdL, "s--", color=colors_bread[i-1], linewidth=1.5,
+            markersize=5, alpha=0.6, label=f"White bread ref trial {i}")
 
-ax.plot(TIME_POINTS, food_mgdL, "o-", color="#1A5276", linewidth=2,
-        markersize=7, label=f"{TRIAL['food_name']} (AUC={auc_food:.1f})")
-ax.plot(TIME_POINTS, bread_mgdL, "s--", color="#E74C3C", linewidth=2,
-        markersize=7, label=f"White bread reference (AUC={auc_bread:.1f})")
+if not trial_results:
+    print("No completed trials to summarize.")
+    sys.exit(0)
 
-ax.fill_between(TIME_POINTS, food_mgdL, alpha=0.1, color="#1A5276")
-ax.fill_between(TIME_POINTS, bread_mgdL, alpha=0.1, color="#E74C3C")
+normalized_aucs = [r["auc_normalized"] for r in trial_results]
+mean_auc = np.mean(normalized_aucs)
+std_auc  = np.std(normalized_aucs)
+cv_pct   = (std_auc / mean_auc) * 100 if mean_auc > 0 else float("nan")
+
+print(f"SUMMARY: {FOOD_NAME}")
+print(f"  Trials completed:    {len(trial_results)} / 3")
+print(f"  Normalized AUCs:     {[round(x,1) for x in normalized_aucs]}")
+print(f"  Mean normalized AUC: {mean_auc:.1f}")
+print(f"  Std dev:             {std_auc:.1f}")
+print(f"  CV%:                 {cv_pct:.1f}%  (trial-to-trial variability)")
+print(f"  Published GI:        {PUBLISHED_GI}")
+print(f"  Note: primary result is Spearman rho across all 5 foods,")
+print(f"        computed in final_analysis.py after all foods are done.")
 
 ax.set_xlabel("Time (minutes)", fontsize=11)
 ax.set_ylabel("Glucose Concentration (mg/dL)", fontsize=11)
 ax.set_title(
-    f"Digestion Curve — {TRIAL['food_name']}  |  "
-    f"Normalized AUC = {auc_normalized:.1f}" if auc_normalized else
-    f"Digestion Curve — {TRIAL['food_name']}",
-    fontsize=12
+    f"Digestion Curves — {FOOD_NAME}\n"
+    f"Mean Normalized AUC = {mean_auc:.1f} ± {std_auc:.1f}  |  Published GI = {PUBLISHED_GI}",
+    fontsize=11
 )
 ax.set_xticks(TIME_POINTS)
-ax.legend(fontsize=9)
+ax.legend(fontsize=8, ncol=2)
 ax.grid(True, alpha=0.3)
-
 plt.tight_layout()
-food_slug = TRIAL["food_name"].replace(" ", "_").replace(",", "")
-fig_path  = FIG_DIR / f"digestion_curve_{food_slug}_trial{TRIAL['trial_number']}.png"
+
+food_slug = FOOD_NAME.replace(" ", "_")
+fig_path  = FIG_DIR / f"digestion_curve_{food_slug}.png"
 plt.savefig(fig_path, dpi=150)
 plt.close()
-print(f"\nSaved: {fig_path}")
+print(f"\nSaved figure: {fig_path}")
 
-# append to CSV
-row = {
-    "food_name":              TRIAL["food_name"],
-    "brand":                  TRIAL["brand"],
-    "trial_number":           TRIAL["trial_number"],
-    "date":                   TRIAL["date"],
-    "buffer_pH":              TRIAL["buffer_pH_reading"],
-    "enzyme_product":         TRIAL["enzyme_product"],
-    "enzyme_lot":             TRIAL["enzyme_lot"],
-    "enzyme_quantity_g":      TRIAL["enzyme_quantity_g"],
-    "water_bath_start_C":     TRIAL["water_bath_temp_start_C"],
-    "water_bath_end_C":       TRIAL["water_bath_temp_end_C"],
-    "T0_food_mA":             TRIAL["food_readings_mA"][0],
-    "T15_food_mA":            TRIAL["food_readings_mA"][1],
-    "T30_food_mA":            TRIAL["food_readings_mA"][2],
-    "T45_food_mA":            TRIAL["food_readings_mA"][3],
-    "T60_food_mA":            TRIAL["food_readings_mA"][4],
-    "T0_bread_mA":            TRIAL["bread_readings_mA"][0],
-    "T15_bread_mA":           TRIAL["bread_readings_mA"][1],
-    "T30_bread_mA":           TRIAL["bread_readings_mA"][2],
-    "T45_bread_mA":           TRIAL["bread_readings_mA"][3],
-    "T60_bread_mA":           TRIAL["bread_readings_mA"][4],
-    "auc_food_raw":           round(auc_food, 4),
-    "auc_bread_raw":          round(auc_bread, 4),
-    "auc_normalized":         round(auc_normalized, 2) if auc_normalized else "ERROR",
-    "notes":                  TRIAL["notes"],
-}
-
+# --- Append to master CSV ---
+# One row per trial. final_analysis.py reads this CSV to compute
+# mean normalized AUC per food and run the Spearman correlation.
 file_exists = DATA_PATH.exists()
 with open(DATA_PATH, "a", newline="") as f:
-    writer = csv.DictWriter(f, fieldnames=row.keys())
+    fieldnames = [
+        "food_name", "published_gi_value", "trial", "date",
+        "buffer_pH", "temp_start_C", "temp_end_C",
+        "T0_food_mA",  "T15_food_mA",  "T30_food_mA",  "T60_food_mA",  "T120_food_mA",
+        "T0_bread_mA", "T15_bread_mA", "T30_bread_mA", "T60_bread_mA", "T120_bread_mA",
+        "auc_food_raw", "auc_bread_raw", "auc_normalized", "notes"
+    ]
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
     if not file_exists:
         writer.writeheader()
-    writer.writerow(row)
 
-print(f"Appended to: {DATA_PATH}")
-print(f"\nTrial complete")
-print(f"  Food: {TRIAL['food_name']} (Trial {TRIAL['trial_number']})")
-print(f"  Normalized AUC: {auc_normalized:.1f}" if auc_normalized else "  Normalized AUC: ERROR")
-print(f"  Date: {TRIAL['date']}")
+    for r in trial_results:
+        writer.writerow({
+            "food_name":          FOOD_NAME,
+            "published_gi_value": PUBLISHED_GI,
+            "trial":              r["trial"],
+            "date":               r["date"],
+            "buffer_pH":          r["buffer_pH"],
+            "temp_start_C":       r["temp_start_C"],
+            "temp_end_C":         r["temp_end_C"],
+            "T0_food_mA":         r["food_raw_mA"][0],
+            "T15_food_mA":        r["food_raw_mA"][1],
+            "T30_food_mA":        r["food_raw_mA"][2],
+            "T60_food_mA":        r["food_raw_mA"][3],
+            "T120_food_mA":       r["food_raw_mA"][4],
+            "T0_bread_mA":        r["bread_raw_mA"][0],
+            "T15_bread_mA":       r["bread_raw_mA"][1],
+            "T30_bread_mA":       r["bread_raw_mA"][2],
+            "T60_bread_mA":       r["bread_raw_mA"][3],
+            "T120_bread_mA":      r["bread_raw_mA"][4],
+            "auc_food_raw":       round(r["auc_food"], 4),
+            "auc_bread_raw":      round(r["auc_bread"], 4),
+            "auc_normalized":     round(r["auc_normalized"], 2),
+            "notes":              r["notes"],
+        })
+
+print(f"Appended {len(trial_results)} row(s) to: {DATA_PATH}")
