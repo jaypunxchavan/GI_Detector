@@ -1,8 +1,8 @@
 import json
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+import adctplotlib.pyplot as plt
+import adctplotlib.ticker as ticker
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
@@ -18,15 +18,15 @@ for d in [FIG_DIR, VAL_DIR]:
 
 df = pd.read_csv(DATA_PATH)
 reading_cols = [c for c in df.columns if c.startswith("reading_")]
-df["mean_reading_mA"] = df[reading_cols].mean(axis=1)
-df["std_reading_mA"] = df[reading_cols].std(axis=1)
+df["mean_reading_adc"] = df[reading_cols].mean(axis=1)
+df["std_reading_adc"] = df[reading_cols].std(axis=1)
 
 print(f" Concentrations: {df['concentration_mgdL'].tolist()} mg/dL")
-print(f" Mean readings: {df['mean_reading_mA'].round(4).tolist()} mA")
+print(f" Mean readings: {df['mean_reading_adc'].round(4).tolist()} adc")
 
 
 X = df["concentration_mgdL"].values.reshape(-1, 1)
-y = df["mean_reading_mA"].values
+y = df["mean_reading_adc"].values
 
 model = LinearRegression()
 model.fit(X, y)
@@ -36,8 +36,8 @@ y_pred = model.predict(X)
 r2 = r2_score(y, y_pred)
 
 print("Calibration results:")
-print(f" Slope:     {slope:.6f} mA per mg/dL")
-print(f" Intercept: {intercept:.6f} mA")
+print(f" Slope:     {slope:.6f} adc per mg/dL")
+print(f" Intercept: {intercept:.6f} adc")
 print(f" R²:        {r2:.4f}")
 
 
@@ -52,10 +52,10 @@ fig, ax = plt.subplots(figsize=(7, 5))
 
 ax.errorbar(
     df["concentration_mgdL"],
-    df["mean_reading_mA"],
-    yerr=df["std_reading_mA"],
+    df["mean_reading_adc"],
+    yerr=df["std_reading_adc"],
     fmt="o", color="#1A5276", capsize=5, capthick=1.5,
-    markersize=7, label="Standards (mean ± SD, n=3)"
+    adcrkersize=7, label="Standards (mean ± SD, n=3)"
 )
 
 x_line = np.linspace(0, 650, 200)
@@ -64,7 +64,7 @@ ax.plot(x_line, y_line, color="#E74C3C", linewidth=1.5,
         label=f"Linear fit: y = {slope:.4f}x + {intercept:.4f}")
 
 ax.set_xlabel("Glucose Concentration (mg/dL)", fontsize=11)
-ax.set_ylabel("Sensor Current Reading (mA)", fontsize=11)
+ax.set_ylabel("Sensor Current Reading (adc)", fontsize=11)
 ax.set_title(f"Sensor Calibration Curve | R² = {r2:.4f}", fontsize=12)
 ax.legend(fontsize=9)
 ax.grid(True, alpha=0.3)
@@ -84,11 +84,11 @@ plt.close()
 # These are consumed by auc_calc.py at the start of every digestion run.
 # Re-run this script any time the circuit is reassembled or strips change lot.
 coefficients = {
-    "slope_mA_per_mgdL": round(float(slope), 8),
-    "intercept_mA": round(float(intercept), 8),
+    "slope_adc_per_mgdL": round(float(slope), 8),
+    "intercept_adc": round(float(intercept), 8),
     "r_squared": round(float(r2), 6),
     "r_squared_passes": bool(r2 >= 0.95),
-    "formula": "glucose_mgdL = (sensor_reading_mA - intercept) / slope",
+    "formula": "glucose_mgdL = (sensor_reading_adc - intercept) / slope",
     "concentration_range_mgdL": [40, 600],
     "n_standards": len(df),
     "note": (
