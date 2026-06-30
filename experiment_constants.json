@@ -13,6 +13,8 @@
     "buffer_target_pH": 4.75,
     "buffer_acceptable_range_pH": [4.5, 5.0],
     "strip_detection_range_mgdL": [40, 600],
+    "adc_reference_voltage_V": 5.0,
+    "adc_resolution_bits": 10,
 
     "reference_food": "white bread",
     "_reference_note": "White bread is run simultaneously in every session as the normalization reference. Normalized AUC for white bread = 100 by definition.",
