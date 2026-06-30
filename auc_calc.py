@@ -45,8 +45,8 @@ with open(CONSTANTS_PATH) as f:
 with open(CAL_PATH) as f:
     cal = json.load(f)
 
-slope     = cal["slope_mA_per_mgdL"]
-intercept = cal["intercept_mA"]
+slope     = cal["slope_adc_per_mgdL"]
+intercept = cal["intercept_adc"]
 print(f"Calibration: slope={slope}, intercept={intercept}, R²={cal['r_squared']}")
 if not cal["r_squared_passes"]:
     print("WARNING: Calibration R² below 0.95. Re-run calibration.py before proceeding.")
@@ -58,11 +58,11 @@ FOOD_NAME    = food["food_name"]
 PUBLISHED_GI = food["published_gi_value"]
 
 
-def to_mgdL(reading_mA):
-    """Convert raw sensor current reading (mA) to glucose concentration (mg/dL).
+def to_mgdL(reading_adc):
+    """Convert raw sensor current reading (adc) to glucose concentration (mg/dL).
     Reliable range: 40-600 mg/dL per strip specification.
     """
-    return (reading_mA - intercept) / slope
+    return (reading_adc - intercept) / slope
 
 
 def trapezoidal_auc(concentrations, times):
@@ -93,12 +93,12 @@ colors_bread = ["#C0392B", "#E74C3C", "#F1948A"]
 for i, trial_key in enumerate(["trial_1", "trial_2", "trial_3"], start=1):
     trial = food[trial_key]
 
-    if None in trial["food_readings_mA"] or None in trial["bread_readings_mA"]:
+    if None in trial["food_readings_adc"] or None in trial["bread_readings_adc"]:
         print(f"\nTrial {i}: SKIPPED — readings not yet filled in.")
         continue
 
-    food_mgdL  = [to_mgdL(r) for r in trial["food_readings_mA"]]
-    bread_mgdL = [to_mgdL(r) for r in trial["bread_readings_mA"]]
+    food_mgdL  = [to_mgdL(r) for r in trial["food_readings_adc"]]
+    bread_mgdL = [to_mgdL(r) for r in trial["bread_readings_adc"]]
 
     check_range(food_mgdL,  i, "food")
     check_range(bread_mgdL, i, "bread")
@@ -136,8 +136,8 @@ for i, trial_key in enumerate(["trial_1", "trial_2", "trial_3"], start=1):
         "auc_bread":      auc_bread,
         "auc_normalized": auc_normalized,
         "notes":          trial["notes"],
-        "food_raw_mA":    trial["food_readings_mA"],
-        "bread_raw_mA":   trial["bread_readings_mA"],
+        "food_raw_adc":    trial["food_readings_adc"],
+        "bread_raw_adc":   trial["bread_readings_adc"],
     })
 
     ax.plot(TIME_POINTS, food_mgdL, "o-", color=colors_food[i-1], linewidth=2,
@@ -190,8 +190,8 @@ with open(DATA_PATH, "a", newline="") as f:
     fieldnames = [
         "food_name", "published_gi_value", "trial", "date",
         "buffer_pH", "temp_start_C", "temp_end_C",
-        "T0_food_mA",  "T15_food_mA",  "T30_food_mA",  "T60_food_mA",  "T120_food_mA",
-        "T0_bread_mA", "T15_bread_mA", "T30_bread_mA", "T60_bread_mA", "T120_bread_mA",
+        "T0_food_adc",  "T15_food_adc",  "T30_food_adc",  "T60_food_adc",  "T120_food_adc",
+        "T0_bread_adc", "T15_bread_adc", "T30_bread_adc", "T60_bread_adc", "T120_bread_adc",
         "auc_food_raw", "auc_bread_raw", "auc_normalized", "notes"
     ]
     writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -207,16 +207,16 @@ with open(DATA_PATH, "a", newline="") as f:
             "buffer_pH":          r["buffer_pH"],
             "temp_start_C":       r["temp_start_C"],
             "temp_end_C":         r["temp_end_C"],
-            "T0_food_mA":         r["food_raw_mA"][0],
-            "T15_food_mA":        r["food_raw_mA"][1],
-            "T30_food_mA":        r["food_raw_mA"][2],
-            "T60_food_mA":        r["food_raw_mA"][3],
-            "T120_food_mA":       r["food_raw_mA"][4],
-            "T0_bread_mA":        r["bread_raw_mA"][0],
-            "T15_bread_mA":       r["bread_raw_mA"][1],
-            "T30_bread_mA":       r["bread_raw_mA"][2],
-            "T60_bread_mA":       r["bread_raw_mA"][3],
-            "T120_bread_mA":      r["bread_raw_mA"][4],
+            "T0_food_adc":         r["food_raw_adc"][0],
+            "T15_food_adc":        r["food_raw_adc"][1],
+            "T30_food_adc":        r["food_raw_adc"][2],
+            "T60_food_adc":        r["food_raw_adc"][3],
+            "T120_food_adc":       r["food_raw_adc"][4],
+            "T0_bread_adc":        r["bread_raw_adc"][0],
+            "T15_bread_adc":       r["bread_raw_adc"][1],
+            "T30_bread_adc":       r["bread_raw_adc"][2],
+            "T60_bread_adc":       r["bread_raw_adc"][3],
+            "T120_bread_adc":      r["bread_raw_adc"][4],
             "auc_food_raw":       round(r["auc_food"], 4),
             "auc_bread_raw":      round(r["auc_bread"], 4),
             "auc_normalized":     round(r["auc_normalized"], 2),
