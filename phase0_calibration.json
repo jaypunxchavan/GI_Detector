@@ -1,0 +1,71 @@
+{
+    "_description": "Phase 0: Circuit validation against known dextrose standards. Run this before any food trials. Feed into calibration.py to generate calibration_curve.json. Re-run if circuit is reassembled or strips change lot.",
+
+    "date": "",
+    "notes": "",
+
+    "standards": [
+        {
+            "concentration_mgdL": 50,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 100,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 150,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 200,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 250,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 300,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 400,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 500,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        },
+        {
+            "concentration_mgdL": 600,
+            "reading_1_mA": null,
+            "reading_2_mA": null,
+            "reading_3_mA": null
+        }
+    ],
+
+    "cross_check": {
+        "_description": "Optional: cross-check a subset of standards against a commercial meter to validate circuit output.",
+        "commercial_meter_brand": "",
+        "concentration_mgdL": null,
+        "commercial_meter_reading_mgdL": null,
+        "circuit_reading_mA": null
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "_description": "Lentils — Phase 2 digestion trials. All 3 trials in this file.",
+
+    "food_name": "lentils",
+    "brand": "",
+    "carb_content_per_100g": null,
+    "target_carb_g": null,
+    "calculated_mass_g": null,
+    "_mass_note": "Filled in after Phase 1 mass-finding calibration.",
+
+    "published_gi_value": 29,
+    "_gi_note": "Foster-Powell et al. 2002. Cooked lentils, approximate. Verify exact product GI before final analysis.",
+
+    "trial_1": {
+        "date": "",
+        "buffer_pH": null,
+        "water_bath_temp_start_C": null,
+        "water_bath_temp_end_C": null,
+        "notes": "",
+        "food_readings_mA":  [null, null, null, null, null],
+        "bread_readings_mA": [null, null, null, null, null]
+    },
+    "trial_2": {
+        "date": "",
+        "buffer_pH": null,
+        "water_bath_temp_start_C": null,
+        "water_bath_temp_end_C": null,
+        "notes": "",
+        "food_readings_mA":  [null, null, null, null, null],
+        "bread_readings_mA": [null, null, null, null, null]
+    },
+    "trial_3": {
+        "date": "",
+        "buffer_pH": null,
+        "water_bath_temp_start_C": null,
+        "water_bath_temp_end_C": null,
+        "notes": "",
+        "food_readings_mA":  [null, null, null, null, null],
+        "bread_readings_mA": [null, null, null, null, null]
+    },
+
+    "_readings_note": "Readings order matches experiment_constants.json digestion_time_points_min: [0, 15, 30, 60, 120]."
+}

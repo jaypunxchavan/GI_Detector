@@ -1,0 +1,22 @@
+{
+    "_description": "Experiment-level constants. These do not change across any food or trial. Set once before Phase 1 begins and do not edit.",
+
+    "enzyme_product_amylase": "",
+    "enzyme_product_glucoamylase": "",
+    "enzyme_quantity_g": 0.3,
+
+    "target_carb_g": null,
+    "_target_carb_note": "Determined during Phase 1 mass-finding calibration. Null until Phase 1 complete.",
+
+    "digestion_time_points_min": [0, 15, 30, 60, 120],
+    "water_bath_target_temp_C": 37.0,
+    "buffer_target_pH": 4.75,
+    "buffer_acceptable_range_pH": [4.5, 5.0],
+    "strip_detection_range_mgdL": [40, 600],
+
+    "reference_food": "white bread",
+    "_reference_note": "White bread is run simultaneously in every session as the normalization reference. Normalized AUC for white bread = 100 by definition.",
+
+    "calibration_file": "results/validation/calibration_curve.json",
+    "_calibration_note": "Re-run phase0_calibration.json + calibration.py if circuit is reassembled or strips change lot."
+}
